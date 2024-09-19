@@ -1,8 +1,10 @@
 package com.pl.premier_zone.player;
 
+import com.pl.premier_zone.player.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.util.Optional;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,13 +18,21 @@ public class PlayerService {
         this.playerRepository = playerRepository;
     }
 
-    /**
-     * Retrieve all players from the repository.
-     *
-     * @return List of all players.
-     */
-    public List<Player> getPlayers() {
-        return playerRepository.findAll();
+    public List<Player> getPlayers(String team, String name,String position, String nation) {
+
+        if (team != null && position != null) {
+            return this.getPlayersByTeamAndPosition(team, position);
+        } else if (team != null) {
+            return this.getPlayersFromTeam(team);
+        } else if (name != null) {
+            return this.getPlayersByName(name);
+        } else if (position != null) {
+            return this.getPlayersByPosition(position);
+        } else if (nation != null) {
+            return this.getPlayersByNation(nation);
+        } else {
+            return playerRepository.findAll();
+        }
     }
 
     /**
@@ -33,7 +43,7 @@ public class PlayerService {
      */
     public List<Player> getPlayersFromTeam(String teamName) {
         return playerRepository.findAll().stream()
-                .filter(player -> teamName.equals(player.getTeam()))
+                .filter(player -> player.getTeam().toLowerCase().contains(teamName.toLowerCase()))
                 .collect(Collectors.toList());
     }
 
@@ -106,7 +116,6 @@ public class PlayerService {
             playerRepository.save(playerToUpdate);
             return playerToUpdate;
         }
-
         return null;
     }
 
@@ -134,6 +143,9 @@ public class PlayerService {
         if (playerToDelete.isPresent()) {
             Player player = playerToDelete.get();
             playerRepository.deleteById(player.getId());
+        }
+        else {
+            throw new ResourceNotFoundException("Player with name " + name + " not found");
         }
     }
 }

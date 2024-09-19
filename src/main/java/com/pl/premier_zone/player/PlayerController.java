@@ -1,5 +1,6 @@
 package com.pl.premier_zone.player;
 
+import com.pl.premier_zone.player.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,19 +27,7 @@ public class PlayerController {
             @RequestParam(required = false) String position,
             @RequestParam(required = false) String nation) {
 
-        if (team != null && position != null) {
-            return playerService.getPlayersByTeamAndPosition(team, position);
-        } else if (team != null) {
-            return playerService.getPlayersFromTeam(team);
-        } else if (name != null) {
-            return playerService.getPlayersByName(name);
-        } else if (position != null) {
-            return playerService.getPlayersByPosition(position);
-        } else if (nation != null) {
-            return playerService.getPlayersByNation(nation);
-        } else {
-            return playerService.getPlayers();
-        }
+        return playerService.getPlayers(team, name, position, nation);
     }
 
     // Adds a new player to the system
@@ -63,7 +52,11 @@ public class PlayerController {
     // Deletes a player by name
     @DeleteMapping("/{playerName}")
     public ResponseEntity<Player> deletePlayer(@PathVariable String playerName) {
-        playerService.deletePlayer(playerName);
-        return new ResponseEntity<>(HttpStatus.OK);
+        try {
+           playerService.deletePlayer(playerName);
+           return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }
